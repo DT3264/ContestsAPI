@@ -33,8 +33,6 @@ public class DemoApplication {
 
     private static ServiceAccountCredentials getCredentials() {
         String credentials = System.getenv("GOOGLE_CREDENTIALS");
-        System.out.println("Credentials are");
-        System.out.println(credentials);
         try {
             return ServiceAccountCredentials.fromStream(new ByteArrayInputStream(credentials.getBytes()));
         } catch (IOException ex) {
