@@ -14,7 +14,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class DemoApplication {
 
     public static void main(String[] args) {
+        System.out.println("Initing firebase");
         initFirebase();
+        System.out.println("Firebase should be started");
         SpringApplication.run(DemoApplication.class, args);
     }
 
@@ -31,6 +33,8 @@ public class DemoApplication {
 
     private static ServiceAccountCredentials getCredentials() {
         String credentials = System.getenv("GOOGLE_CREDENTIALS");
+        System.out.println("Credentials are");
+        System.out.println(credentials);
         try {
             return ServiceAccountCredentials.fromStream(new ByteArrayInputStream(credentials.getBytes()));
         } catch (IOException ex) {

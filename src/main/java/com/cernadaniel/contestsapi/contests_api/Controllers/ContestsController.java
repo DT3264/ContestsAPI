@@ -34,6 +34,8 @@ public class ContestsController {
     List<Contest> globalContests = new ArrayList<Contest>();
     ContestsFetcher contestsFetcher = new ContestsFetcher();
 
+    boolean pendingUpdate = false;
+
     @RequestMapping(value = "/update-contests", method = RequestMethod.GET)
     @ResponseStatus(HttpStatus.OK)
     public String updateContests() {
@@ -58,21 +60,24 @@ public class ContestsController {
         notificationsManager.notificateNewContests(newContests);
         Timer timer = new Timer();
         int timeInterval = 1000*60*15;
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                //call the method
-                HttpGet request = new HttpGet(System.getenv("UPDATE_URL"));
-                HttpClient client = HttpClientBuilder.create().build();
-                try{
-                    System.out.println("Sending request");
-                    client.execute(request);
+        if(!pendingUpdate){
+            pendingUpdate = true;
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    HttpGet request = new HttpGet(System.getenv("UPDATE_URL"));
+                    HttpClient client = HttpClientBuilder.create().build();
+                    try{
+                        pendingUpdate=false;
+                        System.out.println("Sending request");
+                        client.execute(request);
+                    }
+                    catch(IOException e){
+                        e.printStackTrace();
+                    }
                 }
-                catch(IOException e){
-                    e.printStackTrace();
-                }
-            }
-        }, timeInterval);
+            }, timeInterval);
+        }
         return "Updated";
     }
 
