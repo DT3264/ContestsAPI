@@ -1,6 +1,12 @@
 package com.cernadaniel.contestsapi.contests_api.Controllers;
+
+import java.io.IOError;
+import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -9,6 +15,11 @@ import com.cernadaniel.contestsapi.contests_api.Utils.ContestsFetcher;
 import com.cernadaniel.contestsapi.contests_api.Utils.Database;
 import com.cernadaniel.contestsapi.contests_api.Utils.NotificationsManager;
 
+
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.HttpClientBuilder;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -28,11 +39,12 @@ public class ContestsController {
     @RequestMapping(value = "/update-contests", method = RequestMethod.GET)
     @ResponseStatus(HttpStatus.OK)
     public String updateContests() {
+        System.out.println("Received request at " + LocalDateTime.now().toString());
         List<Contest> tmpContests = new ArrayList<Contest>();
         long lastUpdate = db.getLastTimeUpdate();
         if (lastUpdate > 3600) {
-            //contestsFetcher.getAtCoderContests(tmpContests);
-            //contestsFetcher.getCodeforcesContests(tmpContests);
+            contestsFetcher.getAtCoderContests(tmpContests);
+            contestsFetcher.getCodeforcesContests(tmpContests);
             tmpContests.sort((Contest c1, Contest c2) -> {
                 return c1.start < c2.start ? -1 : 1;
             });
@@ -46,6 +58,23 @@ public class ContestsController {
         TreeMap<String, Integer> newContests = db.getNewContests();
         NotificationsManager notificationsManager = new NotificationsManager();
         notificationsManager.notificateNewContests(newContests);
+        Timer timer = new Timer();
+        int timeInterval = 1000*60*15;
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                //call the method
+                HttpGet request = new HttpGet("http://localhost:8080/api/update-contests");
+                HttpClient client = HttpClientBuilder.create().build();
+                try{
+                    System.out.println("Sending request");
+                    HttpResponse response = client.execute(request);
+                }
+                catch(IOException e){
+                    e.printStackTrace();
+                }
+            }
+        }, timeInterval);
         return "Updated";
     }
 
