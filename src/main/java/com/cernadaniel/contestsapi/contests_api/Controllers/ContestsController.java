@@ -1,6 +1,5 @@
 package com.cernadaniel.contestsapi.contests_api.Controllers;
 
-import java.io.IOError;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -16,7 +15,6 @@ import com.cernadaniel.contestsapi.contests_api.Utils.Database;
 import com.cernadaniel.contestsapi.contests_api.Utils.NotificationsManager;
 
 
-import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -64,11 +62,11 @@ public class ContestsController {
             @Override
             public void run() {
                 //call the method
-                HttpGet request = new HttpGet("http://localhost:8080/api/update-contests");
+                HttpGet request = new HttpGet(System.getenv("UPDATE_URL"));
                 HttpClient client = HttpClientBuilder.create().build();
                 try{
                     System.out.println("Sending request");
-                    HttpResponse response = client.execute(request);
+                    client.execute(request);
                 }
                 catch(IOException e){
                     e.printStackTrace();
