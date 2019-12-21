@@ -39,7 +39,6 @@ public class ContestsController {
     @RequestMapping(value = "/update-contests", method = RequestMethod.GET)
     @ResponseStatus(HttpStatus.OK)
     public String updateContests() {
-        System.out.println("Received request at " + LocalDateTime.now().toString());
         List<Contest> tmpContests = new ArrayList<Contest>();
         long lastUpdate = db.getLastTimeUpdate();
         if (lastUpdate > 3600) {
@@ -58,7 +57,14 @@ public class ContestsController {
         TreeMap<String, Integer> newContests = db.getNewContests();
         NotificationsManager notificationsManager = new NotificationsManager();
         notificationsManager.notificateNewContests(newContests);
+        checkTimerToUpdate();
+        return "Updated";
+    }
+
+    void checkTimerToUpdate(){
         Timer timer = new Timer();
+        //Perform a request after 15 minutes
+        //so heroku don't kill me for being idle
         int timeInterval = 1000*60*15;
         if(!pendingUpdate){
             pendingUpdate = true;
@@ -69,7 +75,7 @@ public class ContestsController {
                     HttpClient client = HttpClientBuilder.create().build();
                     try{
                         pendingUpdate=false;
-                        System.out.println("Sending request");
+                        System.out.println("Sending request at " + LocalDateTime.now().toString());
                         client.execute(request);
                     }
                     catch(IOException e){
@@ -78,7 +84,6 @@ public class ContestsController {
                 }
             }, timeInterval);
         }
-        return "Updated";
     }
 
     @RequestMapping(value = "/{req}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)

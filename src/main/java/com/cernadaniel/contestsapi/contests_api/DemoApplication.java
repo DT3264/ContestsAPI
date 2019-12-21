@@ -2,11 +2,17 @@ package com.cernadaniel.contestsapi.contests_api;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -14,10 +20,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class DemoApplication {
 
     public static void main(String[] args) {
-        System.out.println("Initing firebase");
         initFirebase();
-        System.out.println("Firebase should be started");
         SpringApplication.run(DemoApplication.class, args);
+        scheduleUpdates();
     }
 
     private static void initFirebase() {
@@ -39,5 +44,25 @@ public class DemoApplication {
             System.out.println(ex.getMessage());
         }
         return null;
+    }
+
+    private static void scheduleUpdates() {
+        Timer timer = new Timer();
+        // Perform the first request after 15 seconds,
+        // enough time for the server to start
+        int timeInterval = 1000 * 15;
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                HttpGet request = new HttpGet(System.getenv("UPDATE_URL"));
+                HttpClient client = HttpClientBuilder.create().build();
+                try {
+                    System.out.println("Sending request at " + LocalDateTime.now().toString());
+                    client.execute(request);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, timeInterval);
     }
 }
