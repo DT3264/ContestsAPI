@@ -33,6 +33,7 @@ end //
 create procedure resetAfterUpdated()
 begin
 update lastHour set lastUnix =  UNIX_TIMESTAMP(UTC_TIMESTAMP());
+delete from contests where contestStart < UNIX_TIMESTAMP(UTC_TIMESTAMP());
 end //
 
 create procedure getNewContests()
@@ -42,3 +43,9 @@ update contests set hasBeenNotified = 1;
 end //
 
 delimiter ;
+
+
+resetAfterUpdated, STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION, CREATE DEFINER=`root`@`localhost` PROCEDURE `resetAfterUpdated`()
+begin
+update lastHour set lastUnix =  UNIX_TIMESTAMP(UTC_TIMESTAMP());
+end, utf8mb4, utf8mb4_0900_ai_ci, utf8mb4_0900_ai_ci
