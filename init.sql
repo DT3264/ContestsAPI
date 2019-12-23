@@ -20,9 +20,8 @@ DELIMITER //
 create procedure insertContest
 (in _contestName varchar(150), in _contestStart int, in _contestEnd int, in _contestUrl varchar(150), in _contestPlatform varchar(60))
 begin
-INSERT INTO contests VALUES 
-(_contestName, _contestStart, _contestEnd, _contestUrl, _contestPlatform, 0)
-on duplicate key update contestName=_contestName;
+INSERT INTO contests VALUES (_contestName, _contestStart, _contestEnd, _contestUrl, _contestPlatform, 0)
+on duplicate key update contestName=_contestName, contestStart = _contestStart, contestEnd = _contestEnd;
 end //
 
 create procedure getTimeSinceLastUpdate()
