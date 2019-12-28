@@ -14,7 +14,6 @@ import com.cernadaniel.contestsapi.contests_api.Utils.ContestsFetcher;
 import com.cernadaniel.contestsapi.contests_api.Utils.Database;
 import com.cernadaniel.contestsapi.contests_api.Utils.NotificationsManager;
 
-
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -47,38 +46,37 @@ public class ContestsController {
             tmpContests.sort((Contest c1, Contest c2) -> {
                 return c1.start < c2.start ? -1 : 1;
             });
-            globalContests.clear();
             db.updateContests(tmpContests);
+            tmpContests = db.getContests();
+            synchronized (globalContests) {
+                globalContests.clear();
+                tmpContests.forEach((c) -> globalContests.add(c));
+            }
+            TreeMap<String, Integer> newContests = db.getNewContests();
+            NotificationsManager notificationsManager = new NotificationsManager();
+            notificationsManager.notificateNewContests(newContests);
+            checkTimerToUpdate();
         }
-        tmpContests = db.getContests();
-        synchronized (globalContests) {
-            tmpContests.forEach((c) -> globalContests.add(c));
-        }
-        TreeMap<String, Integer> newContests = db.getNewContests();
-        NotificationsManager notificationsManager = new NotificationsManager();
-        notificationsManager.notificateNewContests(newContests);
-        checkTimerToUpdate();
         return "Updated";
     }
 
-    void checkTimerToUpdate(){
+    void checkTimerToUpdate() {
         Timer timer = new Timer();
-        //Perform a request after 15 minutes
-        //so heroku don't kill me for being idle
-        int timeInterval = 1000*60*15;
-        if(!pendingUpdate){
+        // Perform a request after 15 minutes
+        // so heroku don't kill me for being idle
+        int timeInterval = 1000 * 60 * 15;
+        if (!pendingUpdate) {
             pendingUpdate = true;
             timer.schedule(new TimerTask() {
                 @Override
                 public void run() {
                     HttpGet request = new HttpGet(System.getenv("UPDATE_URL"));
                     HttpClient client = HttpClientBuilder.create().build();
-                    try{
-                        pendingUpdate=false;
+                    try {
+                        pendingUpdate = false;
                         System.out.println("Sending request at " + LocalDateTime.now().toString());
                         client.execute(request);
-                    }
-                    catch(IOException e){
+                    } catch (IOException e) {
                         e.printStackTrace();
                     }
                 }
@@ -89,14 +87,14 @@ public class ContestsController {
     @RequestMapping(value = "/{req}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public List<Contest> showRequestedContests(@PathVariable String req) {
-        if(req.equals("all")){
+        if (req.equals("all")) {
             synchronized (globalContests) {
                 return globalContests;
-            } 
+            }
         }
         String plaforms[] = req.split(",");
         TreeSet<String> requestedPlatforms = new TreeSet<String>();
-        for(String platform : plaforms){
+        for (String platform : plaforms) {
             requestedPlatforms.add(platform);
         }
         List<Contest> contests = new ArrayList<Contest>();
@@ -110,5 +108,4 @@ public class ContestsController {
         return contests;
     }
 
-    
 }

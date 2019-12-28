@@ -20,11 +20,11 @@ public class NotificationsManager {
         try {
             String title = "New " + platform + " contest" + (newContests > 1 ? "s" : "");
             String body = "There" + (newContests > 1 ? " are " : " is ") + newContests + " new contest" + (newContests > 1 ? "s" : "");
-            Notification notification = Notification.builder().setTitle(title).setBody(body).build();
-            Message message = Message.builder().setNotification(notification).setTopic(platform).build();
-            FirebaseMessaging.getInstance().send(message);
+            //Notification notification = Notification.builder().setTitle(title).setBody(body).build();
+            //Message message = Message.builder().setNotification(notification).setTopic(platform).build();
+            //FirebaseMessaging.getInstance().send(message);
             System.out.println("Successfully sent message: " + title + " - " + body);
-        } catch (FirebaseMessagingException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
