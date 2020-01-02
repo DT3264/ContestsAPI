@@ -24,7 +24,7 @@ public class NotificationsManager {
             Message message = Message.builder().setNotification(notification).setTopic(platform).build();
             FirebaseMessaging.getInstance().send(message);
             System.out.println("Successfully sent message: " + title + " - " + body);
-        } catch (Exception e) {
+        } catch (FirebaseMessagingException e) {
             e.printStackTrace();
         }
     }

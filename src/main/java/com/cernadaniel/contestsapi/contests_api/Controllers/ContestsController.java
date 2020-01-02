@@ -80,7 +80,7 @@ public class ContestsController {
             TreeMap<String, Integer> newContests = db.getNewContests();
             NotificationsManager notificationsManager = new NotificationsManager();
             notificationsManager.notificateNewContests(newContests);
-            if(val.equals(System.getenv('SECRET_PARAM'))){
+            if(val.equals(System.getenv("SECRET_PARAM"))){
                 setTimerToUpdate();
             }
         }
