@@ -57,9 +57,6 @@ public class ContestsController {
         return contests;
     }
 
-
-    boolean pendingUpdate = false;
-
     @RequestMapping(value = "/update-contests/{val}", method = RequestMethod.GET)
     @ResponseStatus(HttpStatus.OK)
     public String updateContests(@PathVariable String val) {
@@ -80,9 +77,10 @@ public class ContestsController {
             TreeMap<String, Integer> newContests = db.getNewContests();
             NotificationsManager notificationsManager = new NotificationsManager();
             notificationsManager.notificateNewContests(newContests);
-            if(val.equals(System.getenv("SECRET_PARAM"))){
-                setTimerToUpdate();
-            }
+        }
+        // This check goes outside the > 3600
+        if (val.equals(System.getenv("SECRET_PARAM"))) {
+            setTimerToUpdate();
         }
         return "Updated";
     }
@@ -95,10 +93,9 @@ public class ContestsController {
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                HttpGet request = new HttpGet(System.getenv("UPDATE_URL"));
+                HttpGet request = new HttpGet(System.getenv("UPDATE_URL") + "/" + System.getenv("SECRET_PARAM"));
                 HttpClient client = HttpClientBuilder.create().build();
                 try {
-                    pendingUpdate = false;
                     System.out.println("Sending request at " + LocalDateTime.now().toString());
                     client.execute(request);
                 } catch (IOException e) {
