@@ -33,57 +33,6 @@ public class ContestsController {
     List<Contest> globalContests = new ArrayList<Contest>();
     ContestsFetcher contestsFetcher = new ContestsFetcher();
 
-    boolean pendingUpdate = false;
-
-    @RequestMapping(value = "/update-contests", method = RequestMethod.GET)
-    @ResponseStatus(HttpStatus.OK)
-    public String updateContests() {
-        List<Contest> tmpContests = new ArrayList<Contest>();
-        long lastUpdate = db.getLastTimeUpdate();
-        if (lastUpdate > 3600) {
-            contestsFetcher.getAtCoderContests(tmpContests);
-            contestsFetcher.getCodeforcesContests(tmpContests);
-            tmpContests.sort((Contest c1, Contest c2) -> {
-                return c1.start < c2.start ? -1 : 1;
-            });
-            db.updateContests(tmpContests);
-            tmpContests = db.getContests();
-            synchronized (globalContests) {
-                globalContests.clear();
-                tmpContests.forEach((c) -> globalContests.add(c));
-            }
-            TreeMap<String, Integer> newContests = db.getNewContests();
-            NotificationsManager notificationsManager = new NotificationsManager();
-            notificationsManager.notificateNewContests(newContests);
-            checkTimerToUpdate();
-        }
-        return "Updated";
-    }
-
-    void checkTimerToUpdate() {
-        Timer timer = new Timer();
-        // Perform a request after 15 minutes
-        // so heroku don't kill me for being idle
-        int timeInterval = 1000 * 60 * 15;
-        if (!pendingUpdate) {
-            pendingUpdate = true;
-            timer.schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    HttpGet request = new HttpGet(System.getenv("UPDATE_URL"));
-                    HttpClient client = HttpClientBuilder.create().build();
-                    try {
-                        pendingUpdate = false;
-                        System.out.println("Sending request at " + LocalDateTime.now().toString());
-                        client.execute(request);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }, timeInterval);
-        }
-    }
-
     @RequestMapping(value = "/{req}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public List<Contest> showRequestedContests(@PathVariable String req) {
@@ -106,6 +55,57 @@ public class ContestsController {
             });
         }
         return contests;
+    }
+
+
+    boolean pendingUpdate = false;
+
+    @RequestMapping(value = "/update-contests/{val}", method = RequestMethod.GET)
+    @ResponseStatus(HttpStatus.OK)
+    public String updateContests(@PathVariable String val) {
+        List<Contest> tmpContests = new ArrayList<Contest>();
+        long lastUpdate = db.getLastTimeUpdate();
+        if (lastUpdate > 3600) {
+            contestsFetcher.getAtCoderContests(tmpContests);
+            contestsFetcher.getCodeforcesContests(tmpContests);
+            tmpContests.sort((Contest c1, Contest c2) -> {
+                return c1.start < c2.start ? -1 : 1;
+            });
+            db.updateContests(tmpContests);
+            tmpContests = db.getContests();
+            synchronized (globalContests) {
+                globalContests.clear();
+                tmpContests.forEach((c) -> globalContests.add(c));
+            }
+            TreeMap<String, Integer> newContests = db.getNewContests();
+            NotificationsManager notificationsManager = new NotificationsManager();
+            notificationsManager.notificateNewContests(newContests);
+            if(val.equals(System.getenv('SECRET_PARAM'))){
+                setTimerToUpdate();
+            }
+        }
+        return "Updated";
+    }
+
+    void setTimerToUpdate() {
+        Timer timer = new Timer();
+        // Perform a request after 15 minutes
+        // so heroku don't kill me for being idle
+        int timeInterval = 1000 * 60 * 15;
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                HttpGet request = new HttpGet(System.getenv("UPDATE_URL"));
+                HttpClient client = HttpClientBuilder.create().build();
+                try {
+                    pendingUpdate = false;
+                    System.out.println("Sending request at " + LocalDateTime.now().toString());
+                    client.execute(request);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, timeInterval);
     }
 
 }

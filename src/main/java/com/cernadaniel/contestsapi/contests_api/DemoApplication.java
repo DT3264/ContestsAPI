@@ -54,7 +54,7 @@ public class DemoApplication {
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                HttpGet request = new HttpGet(System.getenv("UPDATE_URL"));
+                HttpGet request = new HttpGet(System.getenv("UPDATE_URL") + "/" + System.getenv("SECRET_PARAM"));
                 HttpClient client = HttpClientBuilder.create().build();
                 try {
                     System.out.println("Sending request at " + LocalDateTime.now().toString());
