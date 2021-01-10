@@ -22,7 +22,6 @@ public class DemoApplication {
     public static void main(String[] args) {
         initFirebase();
         SpringApplication.run(DemoApplication.class, args);
-        scheduleUpdates();
     }
 
     private static void initFirebase() {
@@ -44,25 +43,5 @@ public class DemoApplication {
             System.out.println(ex.getMessage());
         }
         return null;
-    }
-
-    private static void scheduleUpdates() {
-        Timer timer = new Timer();
-        // Perform the first request after 15 seconds,
-        // enough time for the server to start
-        int timeInterval = 1000 * 15;
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                HttpGet request = new HttpGet(System.getenv("UPDATE_URL") + "/" + System.getenv("SECRET_PARAM"));
-                HttpClient client = HttpClientBuilder.create().build();
-                try {
-                    System.out.println("Sending request at " + LocalDateTime.now().toString());
-                    client.execute(request);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, timeInterval);
     }
 }
