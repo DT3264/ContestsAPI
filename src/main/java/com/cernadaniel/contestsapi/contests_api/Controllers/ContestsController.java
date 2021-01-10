@@ -57,52 +57,25 @@ public class ContestsController {
         return contests;
     }
 
-    @RequestMapping(value = "/update-contests/{val}", method = RequestMethod.GET)
+    @RequestMapping(value = "/update-contests", method = RequestMethod.GET)
     @ResponseStatus(HttpStatus.OK)
-    public String updateContests(@PathVariable String val) {
+    public String updateContests() {
         List<Contest> tmpContests = new ArrayList<Contest>();
-        long lastUpdate = db.getLastTimeUpdate();
-        if (lastUpdate > 3600) {
-            contestsFetcher.getAtCoderContests(tmpContests);
-            contestsFetcher.getCodeforcesContests(tmpContests);
-            tmpContests.sort((Contest c1, Contest c2) -> {
-                return c1.start < c2.start ? -1 : 1;
-            });
-            db.updateContests(tmpContests);
-            tmpContests = db.getContests();
-            synchronized (globalContests) {
-                globalContests.clear();
-                tmpContests.forEach((c) -> globalContests.add(c));
-            }
-            TreeMap<String, Integer> newContests = db.getNewContests();
-            NotificationsManager notificationsManager = new NotificationsManager();
-            notificationsManager.notificateNewContests(newContests);
+        contestsFetcher.getAtCoderContests(tmpContests);
+        contestsFetcher.getCodeforcesContests(tmpContests);
+        tmpContests.sort((Contest c1, Contest c2) -> {
+            return c1.start < c2.start ? -1 : 1;
+        });
+        db.updateContests(tmpContests);
+        tmpContests = db.getContests();
+        synchronized (globalContests) {
+            globalContests.clear();
+            tmpContests.forEach((c) -> globalContests.add(c));
         }
-        // This check goes outside the > 3600
-        if (val.equals(System.getenv("SECRET_PARAM"))) {
-            setTimerToUpdate();
-        }
+        TreeMap<String, Integer> newContests = db.getNewContests();
+        NotificationsManager notificationsManager = new NotificationsManager();
+        notificationsManager.notificateNewContests(newContests);
         return "Updated";
-    }
-
-    void setTimerToUpdate() {
-        Timer timer = new Timer();
-        // Perform a request after 15 minutes
-        // so heroku don't kill me for being idle
-        int timeInterval = 1000 * 60 * 15;
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                HttpGet request = new HttpGet(System.getenv("UPDATE_URL") + "/" + System.getenv("SECRET_PARAM"));
-                HttpClient client = HttpClientBuilder.create().build();
-                try {
-                    System.out.println("Sending request at " + LocalDateTime.now().toString());
-                    client.execute(request);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, timeInterval);
     }
 
 }
